@@ -1,2 +1,5 @@
 # Smartank
-A IOT device, which is enabled to connect to ORP, PH, Tempreture meter
+A IOT device, which is enabled to connect to ORP, PH, Temperature meter.
+
+Technologies:
+FLASH, Prometheus, Grafana 
