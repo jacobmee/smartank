@@ -16,7 +16,7 @@ def metrics():
     i2c = busio.I2C(board.SCL, board.SDA)
     ads = ADS.ADS1115(i2c)
 
-    channel = None
+    # INPUT:0
     channel = AnalogIn(ads, ADS.P0)
 
     OFFSET = 10
