@@ -22,6 +22,7 @@ def get_token ():
     return token_key
 
 def get_words (jpg):
+    #request_url = "https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic"
     request_url = "https://aip.baidubce.com/rest/2.0/ocr/v1/accurate_basic"
     f = open(jpg, 'rb')
     img = base64.b64encode(f.read())
@@ -62,32 +63,37 @@ def metrics():
     ####     ORP      ####
     ######################
     # capture the area of the text to "read" by setting "top left" and "right bottom" values in the image
-    left   = 400
-    top    = 780
-    right  = left + 380
-    bottom = top + 180
+    left   = 360
+    top    = 770
+    right  = left + 440
+    bottom = top + 200
 
     JPG = 'code_ORP.jpg'
     orp_image = orig_image[top:bottom,left:right].copy()
     orp_image = cv2.cvtColor(orp_image, cv2.COLOR_BGR2GRAY)
     orp_image = cv2.threshold(orp_image, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
+    orp_image = cv2.morphologyEx(orp_image, cv2.MORPH_OPEN, kernel, iterations=1)
+
     cv2.imwrite(JPG, orp_image)
 
     ######################
     ####     PH       ####
     ######################
-    left   = 1540
-    top    = 190
-    right  = left + 380
-    bottom = top + 180
+    left   = 1480
+    top    = 180
+    right  = left + 440
+    bottom = top + 200
 
     # copy the captured area
 
     JPG = 'code_ph.jpg'
     ph_image = orig_image[top:bottom,left:right].copy()
     ph_image = cv2.cvtColor(ph_image, cv2.COLOR_BGR2GRAY)
-    ph_image = cv2.GaussianBlur(ph_image, (7,7), 0)
+    #ph_image = cv2.GaussianBlur(ph_image, (7,7), 0)
     ph_image = cv2.threshold(ph_image, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
+    ph_image = cv2.morphologyEx(ph_image, cv2.MORPH_OPEN, kernel, iterations=1)
     cv2.imwrite(JPG, ph_image)
 
 
@@ -95,7 +101,7 @@ def metrics():
     ##   TEMPERATURE  ####
     ######################
     # capture the area of the text to "read" by setting "top left" and "right bottom" values in the image
-    left   = 1540
+    left   = 1500
     top    = 370
     right  = left + 380
     bottom = top + 180
@@ -115,11 +121,18 @@ def metrics():
     size = len(words_result)
     metrics = ""
     if (size > 0):
-        ORP = words_result[0]['words']
-        metrics = "ORP " + ORP
+        ORP = float(words_result[0]['words'])
+        if ORP > 200 :
+            metrics = "ORP {:.1f}".format(ORP) + "\n"
 
-    #if (size > 1):
-    #    metrics = metrics + "\nPH " + words_result[1]['words']
+    if (size > 1):
+        PH = float(words_result[1]['words'])
+        if PH > 70 :
+            metrics = metrics + "PH {:.1f}".format((PH/10)) + "\n"
+        if PH == 19 or PH == 9:
+            metrics = metrics + "PH 7.9\n"
+        if PH > 8 and PH < 9 :
+            metrics = metrics + "PH {:.1f}".format(PH) + "\n"
 
     #if (size > 2):
     #    metrics = metrics + "\nT " + words_result[2]['words']
