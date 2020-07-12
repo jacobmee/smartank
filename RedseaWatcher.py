@@ -101,10 +101,10 @@ def metrics():
     ##   TEMPERATURE  ####
     ######################
     # capture the area of the text to "read" by setting "top left" and "right bottom" values in the image
-    left   = 1500
+    left   = 1480
     top    = 370
-    right  = left + 380
-    bottom = top + 180
+    right  = left + 440
+    bottom = top + 200
     JPG = 'code_t.jpg'
     t_image = orig_image[top:bottom,left:right].copy()
     t_image = cv2.cvtColor(t_image, cv2.COLOR_BGR2GRAY)
@@ -113,8 +113,8 @@ def metrics():
     cv2.imwrite(JPG, t_image)
 
     JPG = 'redsea.jpg'
-    #vis = np.concatenate((orp_image, ph_image, t_image), axis=0)
-    vis = np.concatenate((orp_image, ph_image), axis=0)
+    vis = np.concatenate((orp_image, ph_image, t_image), axis=0)
+    #vis = np.concatenate((orp_image, ph_image), axis=0)
     cv2.imwrite(JPG, vis)
 
     words_result = get_words(JPG)
@@ -133,9 +133,12 @@ def metrics():
             metrics = metrics + "PH 7.9\n"
         if PH > 8 and PH < 9 :
             metrics = metrics + "PH {:.1f}".format(PH) + "\n"
+        if PH == 24 or PH == 25 or PH == 26:
+            metrics = metrics + "T {:.1f}".format(PH) + "\n"
 
-    #if (size > 2):
-    #    metrics = metrics + "\nT " + words_result[2]['words']
+    if (size > 2):
+        T = float(words_result[2]['words'])
+        metrics = metrics + "T {:.1f}".format(T) + "\n"
 
     return metrics, 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
