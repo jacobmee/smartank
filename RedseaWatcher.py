@@ -120,25 +120,30 @@ def metrics():
     words_result = get_words(JPG)
     size = len(words_result)
     metrics = ""
-    if (size > 0):
+    if (size > 0): # ORP data
         ORP = float(words_result[0]['words'])
         if ORP > 200 :
             metrics = "ORP {:.1f}".format(ORP) + "\n"
+            size = size - 1
 
-    if (size > 1):
+    if (size > 0): # PH Data
         PH = float(words_result[1]['words'])
         if PH > 70 :
             metrics = metrics + "PH {:.1f}".format((PH/10)) + "\n"
-        if PH == 19 or PH == 9:
+        elif PH == 19 or PH == 9:
             metrics = metrics + "PH 7.9\n"
-        if PH > 8 and PH < 9 :
+        elif PH == 0:
+            metrics = metrics + "PH 8.0\n"
+        elif PH > 8 and PH < 9 :
             metrics = metrics + "PH {:.1f}".format(PH) + "\n"
-        if PH == 24 or PH == 25 or PH == 26:
-            metrics = metrics + "T {:.1f}".format(PH) + "\n"
+        size = size - 1
 
-    if (size > 2):
+    if (size > 0): # T Data
         T = float(words_result[2]['words'])
         metrics = metrics + "T {:.1f}".format(T) + "\n"
+    elif (size == 0): # Missing PH data
+        if PH == 24 or PH == 25 or PH == 26:
+            metrics = metrics + "PH \nT {:.1f}".format(PH) + "\n"
 
     return metrics, 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
