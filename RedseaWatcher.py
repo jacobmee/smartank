@@ -27,6 +27,7 @@ def get_token ():
 def get_words (jpg):
     #request_url = "https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic"
     request_url = "https://aip.baidubce.com/rest/2.0/ocr/v1/accurate_basic"
+    #request_url = "https://aip.baidubce.com/rest/2.0/ocr/v1/numbers"
     f = open(jpg, 'rb')
     img = base64.b64encode(f.read())
 
@@ -35,6 +36,7 @@ def get_words (jpg):
     request_url = request_url + "?access_token=" + access_token
     headers = {'content-type': 'application/x-www-form-urlencoded'}
     response = requests.post(request_url, data=params, headers=headers)
+    print (response)
     token_key = ""
     if response:
         token_info = response.json()
@@ -42,10 +44,43 @@ def get_words (jpg):
         num = token_info['words_result_num']
         if num > 0:
             token_key = token_info['words_result']
-            print (str(len(token_key))+":"+json.dumps(token_key))
+            print (str(len(token_key)) + ":" + json.dumps(token_key))
             return token_key
 
     return ""
+
+# From words into temperature
+def getTemperature (words):
+        T_str = words.strip()
+        T_float = 0
+        if (T_str == "2S" or T_str == "2s"):
+            T_f = 25
+        else:
+            T_f = float(T_str)
+
+        if (T_f  > 20 and T_f < 30):
+            return "T {:.1f}".format(T_f) + "\n"
+
+# From words into ORP
+def getORP (words):
+    ORP = float(words)
+    if ORP > 100 :
+        return "ORP {:.1f}".format(ORP) + "\n"
+
+# From words into PH
+def getPH (words):
+    PH = float(words)
+    if PH > 75 and PH < 85 :
+        return "PH {:.1f}".format((PH/10)) + "\n"
+    elif PH == 19 or PH == 9:
+        return "PH 7.9\n"
+    elif PH == 0:
+        return "PH 8.0\n"
+    elif PH > 7.5 and PH < 9 :
+        return "PH {:.1f}".format(PH) + "\n"
+    else: # possible to be T?
+        return getTemperature(words)
+
 
 # To analysis the return values
 def populate (words_result):
@@ -56,32 +91,26 @@ def populate (words_result):
         return metrics
 
     if (size > 0): # ORP data
-        ORP = float(words_result[0]['words'])
-        if ORP > 200 :
-            metrics = "ORP {:.1f}".format(ORP) + "\n"
-            size = size - 1
+        metrics = metrics + getORP(words_result[0]['words'])
 
-    if (size > 0): # PH Data
-        PH = float(words_result[1]['words'])
-        if PH > 70 :
-            metrics = metrics + "PH {:.1f}".format((PH/10)) + "\n"
-        elif PH == 19 or PH == 9:
-            metrics = metrics + "PH 7.9\n"
-        elif PH == 0:
-            metrics = metrics + "PH 8.0\n"
-        elif PH > 8 and PH < 9 :
-            metrics = metrics + "PH {:.1f}".format(PH) + "\n"
-        size = size - 1
+    if (size > 1): # PH Data
+        metrics = metrics + getPH(words_result[1]['words'])
 
-    if (size > 0): # T Data
-        T = float(words_result[2]['words'])
-        metrics = metrics + "T {:.1f}".format(T) + "\n"
-    elif (size == 0): # Missing PH data
-        if PH == 24 or PH == 25 or PH == 26:
-            metrics = metrics + "PH \nT {:.1f}".format(PH) + "\n"
+    if (size > 2): # T Data
+        metrics = metrics + getTemperature(words_result[2]['words'])
 
     return metrics
 
+def getTemperature (words):
+        T_str = words.strip()
+        T_float = 0
+        if (T_str == "2S" or T_str == "2s"):
+            T_f = 25
+        else:
+            T_f = float(T_str)
+
+        if (T_f  > 20 and T_f < 30):
+            return "T {:.1f}".format(T_f) + "\n"
 
 app = Flask(__name__)
 
