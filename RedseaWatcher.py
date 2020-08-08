@@ -8,6 +8,11 @@ from flask import Flask
 import base64
 import requests
 import json
+from datetime import datetime
+# Cache
+from werkzeug.contrib.cache import SimpleCache
+cache = SimpleCache()
+# Cache End
 
 # Baidu API get token
 def get_token ():
@@ -49,35 +54,69 @@ def get_words (jpg):
 
     return ""
 
+def set_cache (key, value):
+    cache.set(key, value)
+    #print ("Set cache " + key + ":{:.1f}".format(value))
+    return value
+
+def load_cache (key):
+    value = cache.get(key)
+    if value is None:
+        value = 8
+    print ("Load cache " + key + ":{:.1f}".format(value))
+    return value
+
 # From words into temperature
 def getTemperature (words):
-        T_str = words.strip()
-        T_float = 0
-        if (T_str == "2S" or T_str == "2s"):
-            T_f = 25
-        else:
-            T_f = float(T_str)
+    words = words.strip()
+    T = 0
+    if (words == "2S" or words == "2s"):
+        T = 25
+    else:
+        T = float(words)
 
-        if (T_f  > 20 and T_f < 30):
-            return "T {:.1f}".format(T_f) + "\n"
+    if (T  > 20 and T < 30):
+        return "T {:.1f}".format(set_cache("T", T)) + "\n"
+    else:
+        return ""
+
 
 # From words into ORP
 def getORP (words):
-    ORP = float(words)
+    words = words.strip()
+    if words.isdigit():
+        ORP = float(words)
+    elif words == "36S" or words == "36s":
+        ORP = 365
+
     if ORP > 100 :
-        return "ORP {:.1f}".format(ORP) + "\n"
+        return "ORP {:.1f}".format(set_cache("ORP", ORP)) + "\n"
+    else:
+        return ""
+
 
 # From words into PH
 def getPH (words):
-    PH = float(words)
-    if PH > 75 and PH < 85 :
-        return "PH {:.1f}".format((PH/10)) + "\n"
-    elif PH == 19 or PH == 9:
-        return "PH 7.9\n"
-    elif PH == 0:
-        return "PH 8.0\n"
-    elif PH > 7.5 and PH < 9 :
-        return "PH {:.1f}".format(PH) + "\n"
+    words = words.strip()
+    if words.isdigit():
+        PH = float(words)
+        if PH > 75 and PH < 85 :
+            PH = PH/10
+        elif PH == 19 or PH == 9:
+            PH = 7.9
+        elif PH == 0:
+            PH = 8.0
+    elif words == "\u65e5": # 7.8 or 8.1
+        PH = float(load_cache("PH"))
+        if (PH <= 7.9): PH = 7.8
+        elif (PH >= 8.0): PH = 8.1
+    elif words == "1\u65e5": # 7.8
+        PH = 7.8
+    else: # not a digit, but also not PH.
+     return getTemperature(words)
+
+    if PH > 7.5 and PH < 9 :
+        return "PH {:.1f}".format(set_cache("PH", PH)) + "\n"
     else: # possible to be T?
         return getTemperature(words)
 
@@ -101,16 +140,10 @@ def populate (words_result):
 
     return metrics
 
-def getTemperature (words):
-        T_str = words.strip()
-        T_float = 0
-        if (T_str == "2S" or T_str == "2s"):
-            T_f = 25
-        else:
-            T_f = float(T_str)
 
-        if (T_f  > 20 and T_f < 30):
-            return "T {:.1f}".format(T_f) + "\n"
+#######################
+#######################
+#__main__
 
 app = Flask(__name__)
 
@@ -186,7 +219,10 @@ def metrics():
     ######################
     # Generating Redsea
     ######################
-    JPG = 'redsea.jpg'
+    # datetime object containing current date and time
+    now = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+
+    JPG = 'redsea.'+str(now)+'.jpg'
     vis = np.concatenate((orp_image, ph_image, t_image), axis=0)
     #vis = np.concatenate((orp_image, ph_image), axis=0)
     cv2.imwrite(JPG, vis)
