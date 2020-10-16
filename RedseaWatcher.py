@@ -62,42 +62,55 @@ def set_cache (key, value):
 def load_cache (key):
     value = cache.get(key)
     if value is None:
-        value = 8
-    print ("Load cache " + key + ":{:.1f}".format(value))
+        if key == "PH":
+            value = 8
+        elif key == "ORP":
+            value = 444.4
+        elif key == "T":
+            value = 25
+    #print ("Load cache " + key + ":{:.1f}".format(value))
     return value
 
 # From words into temperature
 def getTemperature (words):
     words = words.strip()
+    pre_T = float(load_cache("T"))
     T = 0
-    if (words == "2S" or words == "2s"):
-        T = 25
-    else:
+    if words.isdigit():
         T = float(words)
+    elif words == "2S" or words == "2s":
+        T = 25
 
-    if (T  > 20 and T < 30):
+    ABS = abs(T - pre_T)
+
+    if ABS <= 2:
         return "T {:.1f}".format(set_cache("T", T)) + "\n"
     else:
-        return ""
-
+        print ("abs T: {:.1f}".format(ABS) + " use cache: {:.1f}".format(pre_T))
+        return "T {:.1f}".format(pre_T) + "\n"
 
 # From words into ORP
 def getORP (words):
     words = words.strip()
+    pre_ORP = float(load_cache("ORP"))
+    ORP = 0
     if words.isdigit():
         ORP = float(words)
     elif words == "36S" or words == "36s":
         ORP = 365
 
-    if ORP > 100 :
+    ABS = abs(ORP - pre_ORP)
+    if ABS < 200: # > 250 as minmial
         return "ORP {:.1f}".format(set_cache("ORP", ORP)) + "\n"
     else:
-        return ""
-
+        print ("abs T: {:.1f}".format(ABS) + " use cache: {:.1f}".format(pre_ORP))
+        return "ORP {:.1f}".format(pre_ORP) + "\n"
 
 # From words into PH
 def getPH (words):
     words = words.strip()
+    pre_PH = float(load_cache("PH"))
+    PH = 0
     if words.isdigit():
         PH = float(words)
         if PH > 75 and PH < 85 :
@@ -115,19 +128,22 @@ def getPH (words):
     else: # not a digit, but also not PH.
      return getTemperature(words)
 
-    if PH > 7.5 and PH < 9 :
-        return "PH {:.1f}".format(set_cache("PH", PH)) + "\n"
-    else: # possible to be T?
-        return getTemperature(words)
 
+    ABS = abs(PH - pre_PH)
+
+    if ABS <= 0.2:
+        return "PH {:.1f}".format(set_cache("PH", PH)) + "\n"
+    else:
+        print ("abs T: {:.1f}".format(ABS) + " use cache: {:.1f}".format(pre_PH))
+        return "PH {:.1f}".format(pre_PH) + "\n"
 
 # To analysis the return values
 def populate (words_result):
     metrics = ""
 
     size = len(words_result)
-    if (size >= 4 or size <= 0): # Error for reading
-        return metrics
+    #if (size >= 4 or size <= 0): # Error for reading
+    #    return metrics
 
     if (size > 0): # ORP data
         metrics = metrics + getORP(words_result[0]['words'])
