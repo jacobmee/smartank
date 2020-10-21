@@ -1,5 +1,4 @@
 import cv2
-import pytesseract
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 from PIL import Image, ImageEnhance, ImageFilter
@@ -180,13 +179,14 @@ def metrics():
     orig_image = cv2.imread(JPG)
     orig_image = cv2.rotate(orig_image, cv2.ROTATE_180)
 
+    cv2.imwrite(JPG, orig_image)
     ######################
     #  Generating  ORP
     ######################
-    left   = 360
-    top    = 770
-    right  = left + 440
-    bottom = top + 200
+    left   = 100
+    top    = 350
+    right  = left + 180
+    bottom = top + 80
 
     # copy the captured area
     JPG = 'code_ORP.jpg'
@@ -201,10 +201,10 @@ def metrics():
     ######################
     #  Generating  PH
     ######################
-    left   = 1480
-    top    = 180
-    right  = left + 440
-    bottom = top + 200
+    left   = 540
+    top    = 110
+    right  = left + 180
+    bottom = top + 80
 
     # copy the captured area
     JPG = 'code_ph.jpg'
@@ -219,10 +219,10 @@ def metrics():
     ######################
     #  Generating  T
     ######################
-    left   = 1480
-    top    = 370
-    right  = left + 440
-    bottom = top + 200
+    left   = 540
+    top    = 190
+    right  = left + 180
+    bottom = top + 80
 
     # copy the captured area
     JPG = 'code_t.jpg'
