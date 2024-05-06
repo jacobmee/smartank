@@ -10,8 +10,18 @@ import json
 import os
 import logging
 
-logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s',level=logging.INFO, filename=os.path.join(os.path.dirname(__file__), 'smartank.log'),
-    filemode="w",datefmt='%Y-%m-%d %H:%M:%S')
+# Setup logger
+logger = logging.getLogger("MeterWatcher")
+logger.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter(fmt="%(asctime)s %(levelname)s: %(message)s",
+                          datefmt="%Y-%m-%d %H:%M:%S")
+
+fileHandler = logging.FileHandler(os.path.join(os.path.dirname(__file__), 'smartank.log'), "w")
+fileHandler.setLevel(logging.DEBUG)
+fileHandler.setFormatter(formatter)
+
+logger.addHandler(fileHandler)
 
 
 # Baidu API get token
@@ -21,20 +31,22 @@ def get_token ():
     SECRET_KEY = 'xbl7qH58ayTgc8fDuXqUH1wulQ0UGgsG'
 
     url = "https://aip.baidubce.com/oauth/2.0/token"
+
     params = {"grant_type": "client_credentials", "client_id": API_KEY, "client_secret": SECRET_KEY}
     return str(requests.post(url, params=params).json().get("access_token"))
 
 
 # Baidu API to recoginize the pic
 def AI_recognizing (jpg):
-    request_url = "https://aip.baidubce.com/rest/2.0/ocr/v1/numbers"
+    #request_url = "https://aip.baidubce.com/rest/2.0/ocr/v1/numbers"
+    request_url = "https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic"
     f = open(jpg, 'rb')
     img = base64.b64encode(f.read())
 
     params = {"image":img}
     access_token = get_token()
     request_url = request_url + "?access_token=" + access_token
-    
+
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json'
@@ -42,16 +54,12 @@ def AI_recognizing (jpg):
 
     response = requests.post(request_url, data=params, headers=headers)
 
-    #print (response)
-
     words_result = ""
     if response:
         token_info = response.json()
-        #print (token_info)
         num = token_info['words_result_num']
         if num > 0:
             words_result = token_info['words_result']
-            #print (str(len(words_result)) + ":" + json.dumps(words_result))
             return words_result
 
     return ""
@@ -60,46 +68,49 @@ def AI_recognizing (jpg):
 def value_populating (words_result):
     metrics = ""
     info_value = ""
-    
+
     for i in words_result:
         words = i['words']
         words = words.strip()
         value = ""
 
-        if words.isdigit():
+        try:
             numbers = float(words)
-            if numbers < 10 :
+            if numbers.is_integer():
+                if numbers < 10 :
+                    value = getPH(numbers)
+                    metrics = metrics + value + "\n"
+                elif numbers > 70 and numbers < 90 :
+                    value = getPH(numbers/10.0)
+                    metrics = metrics + value + "\n"
+                elif numbers > 20 and numbers < 30 :
+                    value = getTemperature(numbers)
+                    metrics = metrics + value + "\n"
+                elif numbers > 200 and numbers < 500 :
+                    value = getORP(numbers)
+                    metrics = metrics + value + "\n"
+            else:
                 value = getPH(numbers)
                 metrics = metrics + value + "\n"
-            elif numbers > 70 and numbers < 88 :
-                value = getPH(numbers/10)
-                metrics = metrics + value + "\n"
-            elif numbers > 20 and numbers < 30 :
-                value = getTemperature(numbers)
-                metrics = metrics + value + "\n"
-            elif numbers > 200 and numbers < 500 :
-                value = getORP(numbers)
-                metrics = metrics + value + "\n"
 
-            info_value = info_value + "[" + words + " => " + value + "] "
+        except ValueError:
+            logger.error("can't convert:" + words)
 
-    logging.info(info_value)
+        info_value = info_value + "[" + words + " => " + value + "] "
+
+    logger.info(info_value)
 
     return metrics
 
 # From words into PH
-def getPH (numbers):    
-    if numbers == 1:
-        numbers = 8.1
-    elif numbers == 2:
-        numbers = 8.2
+def getPH (numbers):
     return "PH {:.1f}".format(numbers)
-    
+
 
 # From words into temperature
 def getTemperature (numbers):
     return "T {:.0f}".format(numbers)
-    
+
 
 # From words into ORP
 def getORP (numbers):
@@ -124,13 +135,13 @@ def metrics():
         # Opens a image in RGB mode
         Original_Image = Image.open(image_file)
 
-        Rotated_Image = Original_Image.rotate(270,expand=1) 
+        Rotated_Image = Original_Image.rotate(270,expand=1)
         # Size of the image in pixels (size of original image)
         # (This is not mandatory)
         width, height = Rotated_Image.size
 
         # Setting the points for cropped image
-        left = 0 
+        left = 0
         top = 17 * height / 28
         right = width
         bottom = height
@@ -148,10 +159,12 @@ def metrics():
         Image_Name = os.path.join(os.path.dirname(__file__), 'images/redsea_monitor.'+str(now)+'.jpg')
         Final_Image.save(Image_Name)
 
+        # Remove the full image
+        os.remove(image_file)
+
         # Baidu API calls
         words_result = AI_recognizing(Image_Name)
         metrics = value_populating(words_result)
-        #print (metrics)
 
     return metrics, 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
