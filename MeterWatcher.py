@@ -10,19 +10,23 @@ import json
 import os
 import logging
 
-# Setup logger
-logger = logging.getLogger("MeterWatcher")
-logger.setLevel(logging.DEBUG)
+# Get logger
+def get_logger ():
+    logger = logging.getLogger("MeterWatcher")
+    logger.setLevel(logging.DEBUG)
 
-formatter = logging.Formatter(fmt="%(asctime)s %(levelname)s: %(message)s",
-                          datefmt="%Y-%m-%d %H:%M:%S")
+    formatter = logging.Formatter(fmt="%(asctime)s %(levelname)s: %(message)s",
+                              datefmt="%Y-%m-%d %H:%M:%S")
 
-fileHandler = logging.FileHandler(os.path.join(os.path.dirname(__file__), 'smartank.log'), "w")
-fileHandler.setLevel(logging.DEBUG)
-fileHandler.setFormatter(formatter)
+    fileHandler = logging.FileHandler(os.path.join(os.path.dirname(__file__), 'smartank.log'), "w")
+    fileHandler.setLevel(logging.DEBUG)
+    fileHandler.setFormatter(formatter)
 
-logger.addHandler(fileHandler)
+    logger.addHandler(fileHandler)
+    return logger
 
+# Setup global variables
+logger = get_logger()
 
 # Baidu API get token
 def get_token ():
@@ -65,7 +69,7 @@ def value_populating (response):
         num = token_info['words_result_num']
         if num > 0:
             words_result = token_info['words_result']
-            
+
     metrics = ""
     info_value = ""
 
