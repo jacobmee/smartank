@@ -54,18 +54,18 @@ def AI_recognizing (jpg):
 
     response = requests.post(request_url, data=params, headers=headers)
 
+    return response
+
+# To analysis the return values
+def value_populating (response):
     words_result = ""
+    num = 0
     if response:
         token_info = response.json()
         num = token_info['words_result_num']
         if num > 0:
             words_result = token_info['words_result']
-            return words_result
-
-    return ""
-
-# To analysis the return values
-def value_populating (words_result):
+            
     metrics = ""
     info_value = ""
 
@@ -77,7 +77,7 @@ def value_populating (words_result):
         try:
             numbers = float(words)
             if numbers.is_integer():
-                if numbers < 10 :
+                if numbers < 20 :
                     value = getPH(numbers)
                     metrics = metrics + value + "\n"
                 elif numbers > 70 and numbers < 90 :
@@ -104,6 +104,8 @@ def value_populating (words_result):
 
 # From words into PH
 def getPH (numbers):
+    if numbers == 19 :
+        numbers = 7.9
     return "PH {:.1f}".format(numbers)
 
 
@@ -163,8 +165,8 @@ def metrics():
         os.remove(image_file)
 
         # Baidu API calls
-        words_result = AI_recognizing(Image_Name)
-        metrics = value_populating(words_result)
+        response = AI_recognizing(Image_Name)
+        metrics = value_populating(response)
 
     return metrics, 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
