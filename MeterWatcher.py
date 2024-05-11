@@ -85,14 +85,10 @@ def google_AI_recognizing(jpg):
         "utf-8")}, "features": [{"type": "DOCUMENT_TEXT_DETECTION"}]}]}
     data_json = json.dumps(data)
 
-    # Read token from file
-    token_file = os.path.join(os.path.dirname(__file__), 'token.file')
-
-    with open(token_file, 'r') as file:
-        token = file.read().strip()
-
+    output = subprocess.check_output(["/home/pi/google-cloud-sdk/bin/gcloud", "auth", "print-access-token"])
+    token = output.decode("utf-8").strip()
     if not token:
-        logger.error("token.file is empty!")
+        logger.error("Returned token is empty!")
         return ""
 
     headers = {
@@ -103,6 +99,7 @@ def google_AI_recognizing(jpg):
 
     response = requests.post(request_url, data=data_json, headers=headers)
 
+    texts = ""
     try:
         token_info = response.json()
         for i in token_info['responses']:
