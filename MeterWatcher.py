@@ -30,7 +30,7 @@ def get_logger():
 logger = get_logger()
 
 
-def get_token():
+def baidu_get_token():
     # Key and secret
     API_KEY = 'ctBuA0fMObgMHegCTSKCOKHE'
     SECRET_KEY = 'xbl7qH58ayTgc8fDuXqUH1wulQ0UGgsG'
@@ -42,14 +42,14 @@ def get_token():
     return str(requests.post(url, params=params).json().get("access_token"))
 
 
-def AI_recognizing(jpg):
+def baidu_AI_recognizing(jpg):
     # URL for baidu recoginize
     request_url = "https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic"
     f = open(jpg, 'rb')
     img = base64.b64encode(f.read())
 
     params = {"image": img}
-    access_token = get_token()
+    access_token = baidu_get_token()
     request_url = request_url + "?access_token=" + access_token
 
     headers = {
@@ -59,11 +59,7 @@ def AI_recognizing(jpg):
 
     response = requests.post(request_url, data=params, headers=headers)
 
-    return response
-
-
-def value_populating(response):
-    words_result = ""
+    words_result = None
     num = 0
     if response:
         token_info = response.json()
@@ -71,50 +67,99 @@ def value_populating(response):
         if num > 0:
             words_result = token_info['words_result']
 
-    metrics = ""
-    info_value = ""
-
+    texts = []
     for i in words_result:
-        words = i['words']
-        words = words.strip()
-        value = ""
+        words = i["words"]
+        texts += [words]
+
+    return texts
+
+
+def google_AI_recognizing(jpg):
+    # URL for baidu recoginize
+    request_url = "https://vision.googleapis.com/v1/images:annotate"
+    f = open(jpg, 'rb')
+    img = base64.b64encode(f.read())
+
+    data = {"requests": [{"image": {"content": img.decode(
+        "utf-8")}, "features": [{"type": "DOCUMENT_TEXT_DETECTION"}]}]}
+    data_json = json.dumps(data)
+
+    # Read token from file
+    token_file = os.path.join(os.path.dirname(__file__), 'token.file')
+
+    with open(token_file, 'r') as file:
+        token = file.read().strip()
+
+    if not token:
+        logger.error("token.file is empty!")
+        return ""
+
+    headers = {
+        'Content-Type': 'application/json; charset=utf-8',
+        'x-goog-user-project': 'redseawatcher',
+        'Authorization': 'Bearer ' + token
+    }
+
+    response = requests.post(request_url, data=data_json, headers=headers)
+
+    try:
+        token_info = response.json()
+        for i in token_info['responses']:
+            for words in i['textAnnotations']:
+                description = words['description']
+                break
+        texts = description.splitlines()
+    except ValueError:
+        logger.error("can't convert:" + text)
+    except KeyError:
+        logger.error("can't parse:" + response.text)
+
+    return texts
+
+
+def value_populating(texts):
+
+    metrics = ""
+    log_info_value = ""
+
+    for orignial_text in texts:
+        converted_text = None
+
+        # Clean invalid data
+        processing_text = orignial_text.replace(' ', '')  # remove all the spaces
+        processing_text = processing_text.replace('B', '8')  # sometime 8 goes B
 
         try:
-            numbers = float(words)
+            numbers = float(processing_text)
             if numbers.is_integer():
                 if numbers < 20:
-                    value = getPH(numbers)
-                    metrics = metrics + value + "\n"
+                    converted_text = getPH(numbers)
+                    metrics = metrics + converted_text + "\n"
                 elif numbers > 70 and numbers < 90:
-                    value = getPH(numbers / 10.0)
-                    metrics = metrics + value + "\n"
+                    converted_text = getPH(numbers / 10.0)
+                    metrics = metrics + converted_text + "\n"
                 elif numbers > 20 and numbers < 30:
-                    value = getTemperature(numbers)
-                    metrics = metrics + value + "\n"
+                    converted_text = getTemperature(numbers)
+                    metrics = metrics + converted_text + "\n"
                 elif numbers > 200 and numbers < 500:
-                    value = getORP(numbers)
-                    metrics = metrics + value + "\n"
+                    converted_text = getORP(numbers)
+                    metrics = metrics + converted_text + "\n"
             else:
-                value = getPH(numbers)
-                metrics = metrics + value + "\n"
+                converted_text = getPH(numbers)
+                metrics = metrics + converted_text + "\n"
 
         except ValueError:
-            logger.error("can't convert:" + words)
+            logger.error("can't convert:" + orignial_text)
 
-        info_value = info_value + "[" + words + " => " + value + "] "
+        log_info_value = log_info_value + "[" + orignial_text + " => " + converted_text + "] "
 
-    logger.info(info_value)
+    logger.info(log_info_value)
 
     return metrics
 
 
 def getPH(numbers):  # From words into PH
-    if numbers == 19:
-        numbers = 7.9
-    if numbers == 8.8:
-        numbers = 8.0
-    if numbers == 8.9:
-        numbers = 8.4
     return "PH {:.1f}".format(numbers)
 
 
@@ -138,45 +183,49 @@ def metrics():
     image_file = os.path.join(os.path.dirname(__file__), 'images/image.jpg')
     response = subprocess.call(["raspistill", "-o", image_file])
 
-    metrics = ""
+    metrics = None
 
-    if response == 0:
+    if response < 0:
+        return "Can't capture images!", 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
-        # Opens a image in RGB mode
-        Original_Image = Image.open(image_file)
+    # Opens a image in RGB mode
+    Original_Image = Image.open(image_file)
 
-        Rotated_Image = Original_Image.rotate(270, expand=1)
-        # Size of the image in pixels (size of original image)
-        # (This is not mandatory)
-        width, height = Rotated_Image.size
+    Rotated_Image = Original_Image.rotate(270, expand=1)
+    # Size of the image in pixels (size of original image)
+    # (This is not mandatory)
+    width, height = Rotated_Image.size
 
-        # Setting the points for cropped image
-        left = 0
-        top = 17 * height / 28
-        right = width
-        bottom = height
+    # Setting the points for cropped image
+    left = 0
+    top = 17 * height / 28
+    right = width
+    bottom = height
 
-        # Cropped image of above dimension
-        # (It will not change original image)
-        Final_Image = Rotated_Image.crop((left, top, right, bottom))
+    # Cropped image of above dimension
+    # (It will not change original image)
+    Final_Image = Rotated_Image.crop((left, top, right, bottom))
 
-        ######################
-        # Generating Redsea
-        ######################
-        # datetime object containing current date and time
-        now = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    ######################
+    # Generating Redsea
+    ######################
+    # datetime object containing current date and time
+    now = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 
-        Image_Name = os.path.join(os.path.dirname(
-            __file__), 'images/redsea_monitor.' + str(now) + '.jpg')
-        Final_Image.save(Image_Name)
+    Image_Name = os.path.join(os.path.dirname(
+        __file__), 'images/redsea_monitor.' + str(now) + '.jpg')
+    Final_Image.save(Image_Name)
 
-        # Remove the full image
-        os.remove(image_file)
+    # Remove the full image
+    os.remove(image_file)
 
-        # Baidu API calls
-        response = AI_recognizing(Image_Name)
-        metrics = value_populating(response)
+    # texts = baidu_AI_recognizing(Image_Name) # Baidu API calls
+    texts = google_AI_recognizing(Image_Name)
 
+    if not texts:
+        return "No value returned", 200, {'Content-Type': 'text/plain; charset=utf-8'}
+
+    metrics = value_populating(texts)
     return metrics, 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
 
