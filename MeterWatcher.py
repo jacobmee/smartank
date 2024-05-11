@@ -75,7 +75,7 @@ def value_populating(texts):
     log_info_value = ""
 
     for orignial_text in texts:
-        converted_text = None
+        converted_text = ""
 
         # Clean invalid data
         processing_text = orignial_text.replace(' ', '')  # remove all the spaces
@@ -134,7 +134,7 @@ def metrics():
     image_file = os.path.join(os.path.dirname(__file__), 'images/image.jpg')
     response = subprocess.call(["raspistill", "-o", image_file])
 
-    metrics = None
+    metrics = ""
 
     if response < 0:
         return "Can't capture images!", 200, {'Content-Type': 'text/plain; charset=utf-8'}
