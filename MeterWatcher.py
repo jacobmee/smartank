@@ -30,53 +30,7 @@ def get_logger():
 logger = get_logger()
 
 
-def baidu_get_token():
-    # Key and secret
-    API_KEY = 'ctBuA0fMObgMHegCTSKCOKHE'
-    SECRET_KEY = 'xbl7qH58ayTgc8fDuXqUH1wulQ0UGgsG'
-
-    url = "https://aip.baidubce.com/oauth/2.0/token"
-
-    params = {"grant_type": "client_credentials",
-              "client_id": API_KEY, "client_secret": SECRET_KEY}
-    return str(requests.post(url, params=params).json().get("access_token"))
-
-
-def baidu_AI_recognizing(jpg):
-    # URL for baidu recoginize
-    request_url = "https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic"
-    f = open(jpg, 'rb')
-    img = base64.b64encode(f.read())
-
-    params = {"image": img}
-    access_token = baidu_get_token()
-    request_url = request_url + "?access_token=" + access_token
-
-    headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json'
-    }
-
-    response = requests.post(request_url, data=params, headers=headers)
-
-    words_result = None
-    num = 0
-    if response:
-        token_info = response.json()
-        num = token_info['words_result_num']
-        if num > 0:
-            words_result = token_info['words_result']
-
-    texts = []
-    for i in words_result:
-        words = i["words"]
-        texts += [words]
-
-    return texts
-
-
-def google_AI_recognizing(jpg):
-    # URL for baidu recoginize
+def AI_recognizing(jpg):
     request_url = "https://vision.googleapis.com/v1/images:annotate"
     f = open(jpg, 'rb')
     img = base64.b64encode(f.read())
@@ -216,14 +170,27 @@ def metrics():
     # Remove the full image
     os.remove(image_file)
 
-    # texts = baidu_AI_recognizing(Image_Name) # Baidu API calls
-    texts = google_AI_recognizing(Image_Name)
+    texts = AI_recognizing(Image_Name)
 
     if not texts:
         return "No value returned", 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
     metrics = value_populating(texts)
     return metrics, 200, {'Content-Type': 'text/plain; charset=utf-8'}
+
+
+@app.route("/log")
+def log():
+    # Read token from file
+    log_file = os.path.join(os.path.dirname(__file__), 'smartank.log')
+
+    with open(log_file, 'r') as file:
+        log = file.read()
+
+    if not log:
+        return "Empty log", 200, {'Content-Type': 'text/plain; charset=utf-8'}
+
+    return log, 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
 
 if __name__ == "__main__":
