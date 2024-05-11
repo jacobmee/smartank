@@ -7,7 +7,7 @@ import logging
 import os
 
 
-# URL for baidu recoginize
+# URL for google recoginize
 request_url = "https://vision.googleapis.com/v1/images:annotate"
 jpg = os.path.join(os.path.dirname(__file__), 'images/7.9.jpg')
 f = open(jpg, 'rb')

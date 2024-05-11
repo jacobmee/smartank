@@ -113,7 +113,7 @@ def google_AI_recognizing(jpg):
     except ValueError:
         logger.error("can't convert:" + text)
     except KeyError:
-        logger.error("can't parse:" + response.text)
+        logger.error("can't parse, token expired? " + response.text)
 
     return texts
 
