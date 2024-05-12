@@ -5,6 +5,30 @@ import json
 import os
 
 
+def reversed_read(f, lines=120):
+    total_lines_wanted = lines
+
+    BLOCK_SIZE = 1024
+    f.seek(0, 2)
+    block_end_byte = f.tell()
+    lines_to_go = total_lines_wanted
+    block_number = -1
+    blocks = []
+    while lines_to_go > 0 and block_end_byte > 0:
+        if (block_end_byte - BLOCK_SIZE > 0):
+            f.seek(block_number * BLOCK_SIZE, 2)
+            blocks.append(f.read(BLOCK_SIZE))
+        else:
+            f.seek(0, 0)
+            blocks.append(f.read(block_end_byte))
+        lines_found = blocks[-1].count(b'\n')
+        lines_to_go -= lines_found
+        block_end_byte -= BLOCK_SIZE
+        block_number -= 1
+    all_read_text = b''.join(reversed(blocks))
+    return b'\n'.join(all_read_text.splitlines()[-total_lines_wanted:][::-1])
+
+
 app = Flask(__name__)
 
 
@@ -14,8 +38,8 @@ def metrics():
     # Read token from file
     data_file = os.path.join(os.path.dirname(__file__), 'meter.data')
 
-    with open(data_file, "r") as file:
-        data_json = file.readlines()[-1]
+    with open(data_file, "rb") as file:
+        data_json = reversed_read(file, 1).decode("utf-8")
 
     data = json.loads(data_json)
 
@@ -33,13 +57,13 @@ def data():
     # Read token from file
     log_file = os.path.join(os.path.dirname(__file__), 'meter.data')
 
-    with open(log_file, 'r') as file:
-        log = file.read()
+    with open(log_file, 'rb') as file:
+        data = reversed_read(file).decode("utf-8")
 
-    if not log:
+    if not data:
         return "Empty data", 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
-    return log, 200, {'Content-Type': 'text/plain; charset=utf-8'}
+    return data, 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
 
 @app.route("/log")
@@ -47,8 +71,8 @@ def log():
     # Read token from file
     log_file = os.path.join(os.path.dirname(__file__), 'smartank.log')
 
-    with open(log_file, 'r') as file:
-        log = file.read()
+    with open(log_file, 'rb') as file:
+        log = reversed_read(file).decode("utf-8")
 
     if not log:
         return "Empty log", 200, {'Content-Type': 'text/plain; charset=utf-8'}
