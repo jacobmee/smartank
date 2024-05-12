@@ -1,7 +1,6 @@
 # Importing Image class from PIL module
 from PIL import Image, ImageEnhance
 from datetime import datetime
-from flask import Flask
 
 import subprocess
 import base64
@@ -19,7 +18,7 @@ def get_logger():
                                   datefmt="%Y-%m-%d %H:%M:%S")
 
     fileHandler = logging.FileHandler(os.path.join(
-        os.path.dirname(__file__), 'smartank.log'), "w")
+        os.path.dirname(__file__), 'smartank.log'), "a")
     fileHandler.setLevel(logging.DEBUG)
     fileHandler.setFormatter(formatter)
 
@@ -30,7 +29,7 @@ def get_logger():
 logger = get_logger()
 
 
-def AI_recognizing(jpg):
+def text_recognizing(jpg):
     request_url = "https://vision.googleapis.com/v1/images:annotate"
     f = open(jpg, 'rb')
     img = base64.b64encode(f.read())
@@ -53,20 +52,25 @@ def AI_recognizing(jpg):
 
     response = requests.post(request_url, data=data_json, headers=headers)
 
-    texts = ""
-    try:
-        token_info = response.json()
-        for i in token_info['responses']:
-            for words in i['textAnnotations']:
-                description = words['description']
-                break
-        texts = description.splitlines()
-    except ValueError:
-        logger.error("can't convert:" + text)
-    except KeyError:
-        logger.error("can't parse, token expired? " + response.text)
-
+    token_info = response.json()
+    for i in token_info['responses']:
+        for words in i['textAnnotations']:
+            description = words['description']
+            break
+    texts = description.splitlines()
     return texts
+
+
+def getPH(numbers):  # From words into PH
+    return "PH {:.1f}".format(numbers)
+
+
+def getTemperature(numbers):  # From words into temperature
+    return "T {:.0f}".format(numbers)
+
+
+def getORP(numbers):  # From words into ORP
+    return "ORP {:.0f}".format(numbers)
 
 
 def value_populating(texts):
@@ -89,16 +93,16 @@ def value_populating(texts):
                     metrics = metrics + converted_text + "\n"
                 elif numbers > 70 and numbers < 90:
                     converted_text = getPH(numbers / 10.0)
-                    metrics = metrics + converted_text + "\n"
+                    metrics = metrics + converted_text + "\\n"
                 elif numbers > 20 and numbers < 30:
                     converted_text = getTemperature(numbers)
-                    metrics = metrics + converted_text + "\n"
+                    metrics = metrics + converted_text + "\\n"
                 elif numbers > 200 and numbers < 500:
                     converted_text = getORP(numbers)
-                    metrics = metrics + converted_text + "\n"
+                    metrics = metrics + converted_text + "\\n"
             else:
                 converted_text = getPH(numbers)
-                metrics = metrics + converted_text + "\n"
+                metrics = metrics + converted_text + "\\n"
 
         except ValueError:
             logger.error("can't convert:" + orignial_text)
@@ -110,34 +114,14 @@ def value_populating(texts):
     return metrics
 
 
-def getPH(numbers):  # From words into PH
-    return "PH {:.1f}".format(numbers)
-
-
-def getTemperature(numbers):  # From words into temperature
-    return "T {:.0f}".format(numbers)
-
-
-def getORP(numbers):  # From words into ORP
-    return "ORP {:.0f}".format(numbers)
-
-
-#######################
-#######################
-# __main__
-app = Flask(__name__)
-
-
-@app.route("/metrics")
-def metrics():
-
+def capturePicture():
     image_file = os.path.join(os.path.dirname(__file__), 'images/image.jpg')
     response = subprocess.call(["raspistill", "-o", image_file])
 
     metrics = ""
 
     if response < 0:
-        return "Can't capture images!", 200, {'Content-Type': 'text/plain; charset=utf-8'}
+        raise SystemExit('Error: ')
 
     # Opens a image in RGB mode
     Original_Image = Image.open(image_file)
@@ -170,28 +154,29 @@ def metrics():
     # Remove the full image
     os.remove(image_file)
 
-    texts = AI_recognizing(Image_Name)
-
-    if not texts:
-        return "No value returned", 200, {'Content-Type': 'text/plain; charset=utf-8'}
-
-    metrics = value_populating(texts)
-    return metrics, 200, {'Content-Type': 'text/plain; charset=utf-8'}
+    return Image_Name
 
 
-@app.route("/log")
-def log():
+def save_data(metrics):
     # Read token from file
-    log_file = os.path.join(os.path.dirname(__file__), 'smartank.log')
-
-    with open(log_file, 'r') as file:
-        log = file.read()
-
-    if not log:
-        return "Empty log", 200, {'Content-Type': 'text/plain; charset=utf-8'}
-
-    return log, 200, {'Content-Type': 'text/plain; charset=utf-8'}
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    data = "{\"time\":\"" + now + "\",\"content\":\"" + metrics + "\"}\n"
+    data_file = os.path.join(os.path.dirname(__file__), 'meter.data')
+    with open(data_file, "a") as file:
+        file.write(data)
 
 
-if __name__ == "__main__":
-    app.run(debug=True, port=6001, host='0.0.0.0')
+def main() -> None:
+    try:
+        image_name = capturePicture()
+        texts = text_recognizing(image_name)
+        metrics = value_populating(texts)
+        save_data(metrics)
+    except ValueError:
+        logger.error("can't convert:")
+    except KeyError:
+        logger.error("can't parse, token expired? ")
+
+
+if __name__ == '__main__':
+    main()
