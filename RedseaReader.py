@@ -90,7 +90,7 @@ def value_populating(texts):
             if numbers.is_integer():
                 if numbers < 20:
                     converted_text = getPH(numbers)
-                    metrics = metrics + converted_text + "\n"
+                    metrics = metrics + converted_text + "\\n"
                 elif numbers > 70 and numbers < 90:
                     converted_text = getPH(numbers / 10.0)
                     metrics = metrics + converted_text + "\\n"

@@ -41,13 +41,16 @@ def metrics():
     with open(data_file, "rb") as file:
         data_json = tail(file, 1).decode("utf-8")
 
-    data = json.loads(data_json)
+    try :
+        data = json.loads(data_json)
+    except Exception as e:
+        value = ""
 
     date = data["time"]
     value = data["content"]
 
     if not metrics:
-        return "Empty log", 200, {'Content-Type': 'text/plain; charset=utf-8'}
+        value = ""
 
     return value, 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
