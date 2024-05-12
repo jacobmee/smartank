@@ -5,7 +5,7 @@ import json
 import os
 
 
-def reversed_read(f, lines=120):
+def tail(f, lines=80):
     total_lines_wanted = lines
 
     BLOCK_SIZE = 1024
@@ -26,7 +26,7 @@ def reversed_read(f, lines=120):
         block_end_byte -= BLOCK_SIZE
         block_number -= 1
     all_read_text = b''.join(reversed(blocks))
-    return b'\n'.join(all_read_text.splitlines()[-total_lines_wanted:][::-1])
+    return b'\n'.join(all_read_text.splitlines()[-total_lines_wanted:])
 
 
 app = Flask(__name__)
@@ -39,7 +39,7 @@ def metrics():
     data_file = os.path.join(os.path.dirname(__file__), 'meter.data')
 
     with open(data_file, "rb") as file:
-        data_json = reversed_read(file, 1).decode("utf-8")
+        data_json = tail(file, 1).decode("utf-8")
 
     data = json.loads(data_json)
 
@@ -58,7 +58,7 @@ def data():
     log_file = os.path.join(os.path.dirname(__file__), 'meter.data')
 
     with open(log_file, 'rb') as file:
-        data = reversed_read(file).decode("utf-8")
+        data = tail(file).decode("utf-8")
 
     if not data:
         return "Empty data", 200, {'Content-Type': 'text/plain; charset=utf-8'}
@@ -72,7 +72,7 @@ def log():
     log_file = os.path.join(os.path.dirname(__file__), 'smartank.log')
 
     with open(log_file, 'rb') as file:
-        log = reversed_read(file).decode("utf-8")
+        log = tail(file).decode("utf-8")
 
     if not log:
         return "Empty log", 200, {'Content-Type': 'text/plain; charset=utf-8'}
