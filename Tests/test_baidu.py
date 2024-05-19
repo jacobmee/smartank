@@ -32,8 +32,8 @@ logger = get_logger()
 
 def get_token():
     # Key and secret
-    API_KEY = 'ctBuA0fMObgMHegCTSKCOKHE'
-    SECRET_KEY = 'xbl7qH58ayTgc8fDuXqUH1wulQ0UGgsG'
+    API_KEY = ''
+    SECRET_KEY = ''
 
     url = "https://aip.baidubce.com/oauth/2.0/token"
 

@@ -62,6 +62,8 @@ def text_recognizing(jpg):
 
 
 def getPH(numbers):  # From words into PH
+    if numbers > 9 and numbers < 10:  # something it reads 8 to 9
+        numbers -= numbers
     return "PH {:.1f}".format(numbers)
 
 

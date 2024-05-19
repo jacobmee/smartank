@@ -5,7 +5,7 @@ import json
 import os
 
 
-def tail(f, lines=80):
+def tail(f, lines=36):
     total_lines_wanted = lines
 
     BLOCK_SIZE = 1024
