@@ -129,7 +129,7 @@ def value_populating(texts):
 
 
 def capturePicture():
-    image_file = os.path.join(os.path.dirname(__file__), "images/image.jpg")
+    image_file = os.path.join(os.path.dirname(__file__), "static/images/image.jpg")
     response = subprocess.call(["raspistill", "-o", image_file])
 
     metrics = ""
@@ -162,7 +162,7 @@ def capturePicture():
     now = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 
     Image_Name = os.path.join(
-        os.path.dirname(__file__), "images/redsea_monitor." + str(now) + ".jpg"
+        os.path.dirname(__file__), "static/images/redsea_monitor." + str(now) + ".jpg"
     )
     Final_Image.save(Image_Name)
 

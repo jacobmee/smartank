@@ -1,5 +1,6 @@
 # Importing Image class from PIL module
 from flask import Flask  # type: ignore
+from flask import send_file  # type: ignore
 import json
 import os
 
@@ -27,7 +28,7 @@ def tail(f, lines=36):
     return b"\n".join(all_read_text.splitlines()[-total_lines_wanted:])
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path="/static")
 
 
 @app.route("/metrics")
@@ -65,6 +66,24 @@ def data():
         return "Empty data", 200, {"Content-Type": "text/plain; charset=utf-8"}
 
     return data, 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+
+@app.route("/images")
+def images():
+    # Read token from file
+    images = os.listdir(os.path.join(os.path.dirname(__file__), "static/images"))
+
+    # only show images with jpg extension
+    images = [image for image in images if image.endswith(".jpg")]
+    images = [f"<a href='/static/images/{image}'>{image}</a>" for image in images]
+
+    # sort images by name reverse
+    images.sort(reverse=True)
+
+    # Only get top 36 images
+    images = images[:36]
+
+    return "<br>".join(images), 200, {"Content-Type": "text/html; charset=utf-8"}
 
 
 @app.route("/log")
