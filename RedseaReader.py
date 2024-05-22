@@ -1,5 +1,5 @@
 # Importing Image class from PIL module
-from PIL import Image, ImageEnhance
+from PIL import Image
 from datetime import datetime
 
 import subprocess
@@ -14,11 +14,13 @@ def get_logger():
     logger = logging.getLogger("MeterWatcher")
     logger.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter(fmt="%(asctime)s %(levelname)s: %(message)s",
-                                  datefmt="%Y-%m-%d %H:%M:%S")
+    formatter = logging.Formatter(
+        fmt="%(asctime)s %(levelname)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+    )
 
-    fileHandler = logging.FileHandler(os.path.join(
-        os.path.dirname(__file__), 'smartank.log'), "a")
+    fileHandler = logging.FileHandler(
+        os.path.join(os.path.dirname(__file__), "smartank.log"), "a"
+    )
     fileHandler.setLevel(logging.DEBUG)
     fileHandler.setFormatter(formatter)
 
@@ -31,31 +33,39 @@ logger = get_logger()
 
 def text_recognizing(jpg):
     request_url = "https://vision.googleapis.com/v1/images:annotate"
-    f = open(jpg, 'rb')
+    f = open(jpg, "rb")
     img = base64.b64encode(f.read())
 
-    data = {"requests": [{"image": {"content": img.decode(
-        "utf-8")}, "features": [{"type": "DOCUMENT_TEXT_DETECTION"}]}]}
+    data = {
+        "requests": [
+            {
+                "image": {"content": img.decode("utf-8")},
+                "features": [{"type": "DOCUMENT_TEXT_DETECTION"}],
+            }
+        ]
+    }
     data_json = json.dumps(data)
 
-    output = subprocess.check_output(["/home/pi/google-cloud-sdk/bin/gcloud", "auth", "print-access-token"])
+    output = subprocess.check_output(
+        ["/home/pi/google-cloud-sdk/bin/gcloud", "auth", "print-access-token"]
+    )
     token = output.decode("utf-8").strip()
     if not token:
         logger.error("Returned token is empty!")
         return ""
 
     headers = {
-        'Content-Type': 'application/json; charset=utf-8',
-        'x-goog-user-project': 'redseawatcher',
-        'Authorization': 'Bearer ' + token
+        "Content-Type": "application/json; charset=utf-8",
+        "x-goog-user-project": "redseawatcher",
+        "Authorization": "Bearer " + token,
     }
 
     response = requests.post(request_url, data=data_json, headers=headers)
 
     token_info = response.json()
-    for i in token_info['responses']:
-        for words in i['textAnnotations']:
-            description = words['description']
+    for i in token_info["responses"]:
+        for words in i["textAnnotations"]:
+            description = words["description"]
             break
     texts = description.splitlines()
     return texts
@@ -84,8 +94,8 @@ def value_populating(texts):
         converted_text = ""
 
         # Clean invalid data
-        processing_text = orignial_text.replace(' ', '')  # remove all the spaces
-        processing_text = processing_text.replace('B', '8')  # sometime 8 goes B
+        processing_text = orignial_text.replace(" ", "")  # remove all the spaces
+        processing_text = processing_text.replace("B", "8")  # sometime 8 goes B
 
         try:
             numbers = float(processing_text)
@@ -109,7 +119,9 @@ def value_populating(texts):
         except ValueError:
             logger.error("can't convert:" + orignial_text)
 
-        log_info_value = log_info_value + "[" + orignial_text + " => " + converted_text + "] "
+        log_info_value = (
+            log_info_value + "[" + orignial_text + " => " + converted_text + "] "
+        )
 
     logger.info(log_info_value)
 
@@ -117,13 +129,13 @@ def value_populating(texts):
 
 
 def capturePicture():
-    image_file = os.path.join(os.path.dirname(__file__), 'images/image.jpg')
+    image_file = os.path.join(os.path.dirname(__file__), "images/image.jpg")
     response = subprocess.call(["raspistill", "-o", image_file])
 
     metrics = ""
 
     if response < 0:
-        raise SystemExit('Error: ')
+        raise SystemExit("Error: ")
 
     # Opens a image in RGB mode
     Original_Image = Image.open(image_file)
@@ -149,8 +161,9 @@ def capturePicture():
     # datetime object containing current date and time
     now = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 
-    Image_Name = os.path.join(os.path.dirname(
-        __file__), 'images/redsea_monitor.' + str(now) + '.jpg')
+    Image_Name = os.path.join(
+        os.path.dirname(__file__), "images/redsea_monitor." + str(now) + ".jpg"
+    )
     Final_Image.save(Image_Name)
 
     # Remove the full image
@@ -162,8 +175,8 @@ def capturePicture():
 def save_data(metrics):
     # Read token from file
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    data = "{\"time\":\"" + now + "\",\"content\":\"" + metrics + "\"}\n"
-    data_file = os.path.join(os.path.dirname(__file__), 'meter.data')
+    data = '{"time":"' + now + '","content":"' + metrics + '"}\n'
+    data_file = os.path.join(os.path.dirname(__file__), "meter.data")
     with open(data_file, "a") as file:
         file.write(data)
 
@@ -180,5 +193,5 @@ def main() -> None:
         logger.error("can't parse, token expired? ")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

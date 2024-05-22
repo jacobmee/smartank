@@ -4,3 +4,4 @@
 images/
 token.file
 *.data
+.vscode/
