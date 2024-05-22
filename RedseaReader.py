@@ -1,10 +1,10 @@
 # Importing Image class from PIL module
-from PIL import Image
+from PIL import Image  # type: ignore
 from datetime import datetime
 
 import subprocess
 import base64
-import requests
+import requests  # type: ignore
 import json
 import os
 import logging

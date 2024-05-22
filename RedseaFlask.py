@@ -1,5 +1,5 @@
 # Importing Image class from PIL module
-from flask import Flask
+from flask import Flask  # type: ignore
 import json
 import os
 
@@ -11,7 +11,7 @@ def tail(f, lines=36):
     block_end_byte = f.tell()
     lines_to_go = total_lines_wanted
     block_number = -1
-    blocks = [] 
+    blocks = []
     while lines_to_go > 0 and block_end_byte > 0:
         if block_end_byte - BLOCK_SIZE > 0:
             f.seek(block_number * BLOCK_SIZE, 2)
