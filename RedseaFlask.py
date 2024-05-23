@@ -1,6 +1,7 @@
 # Importing Image class from PIL module
 from flask import Flask  # type: ignore
 from flask import send_file  # type: ignore
+from flask import render_template 
 import json
 import os
 
@@ -65,7 +66,8 @@ def data():
     if not data:
         return "Empty data", 200, {"Content-Type": "text/plain; charset=utf-8"}
 
-    return data, 200, {"Content-Type": "text/plain; charset=utf-8"}
+    data = data.replace("\n", "<br>")
+    return render_template('content.html', content=data)
 
 
 @app.route("/images")
@@ -75,7 +77,7 @@ def images():
 
     # only show images with jpg extension
     images = [image for image in images if image.endswith(".jpg")]
-    images = [f"<a href='/static/images/{image}'>{image}</a>" for image in images]
+    images = [f"<li><a href='/static/images/{image}'>{image}</a></li>" for image in images]
 
     # sort images by name reverse
     images.sort(reverse=True)
@@ -83,7 +85,8 @@ def images():
     # Only get top 36 images
     images = images[:36]
 
-    return "<br>".join(images), 200, {"Content-Type": "text/html; charset=utf-8"}
+    content = "".join(images)
+    return render_template('content.html', content=content)
 
 
 @app.route("/log")
@@ -97,7 +100,9 @@ def log():
     if not log:
         return "Empty log", 200, {"Content-Type": "text/plain; charset=utf-8"}
 
-    return log, 200, {"Content-Type": "text/plain; charset=utf-8"}
+    log = log.replace("\n", "<br>")
+
+    return render_template('content.html', content=log)
 
 
 if __name__ == "__main__":
