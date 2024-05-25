@@ -26,7 +26,7 @@ def tail(f, lines=36):
         block_end_byte -= BLOCK_SIZE
         block_number -= 1
     all_read_text = b"".join(reversed(blocks))
-    return b"\n".join(all_read_text.splitlines()[-total_lines_wanted:])
+    return b"\n".join(all_read_text.splitlines()[-total_lines_wanted:][::-1])
 
 
 app = Flask(__name__, static_url_path="/static")
