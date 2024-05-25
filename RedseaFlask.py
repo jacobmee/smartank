@@ -1,7 +1,7 @@
 # Importing Image class from PIL module
 from flask import Flask  # type: ignore
 from flask import send_file  # type: ignore
-from flask import render_template 
+from flask import render_template  # type: ignore
 import json
 import os
 
