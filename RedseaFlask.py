@@ -101,6 +101,7 @@ def log():
         return "Empty log", 200, {"Content-Type": "text/plain; charset=utf-8"}
 
     log = log.replace("\n", "<br>")
+    log = log.replace(" ", "&nbsp;")
 
     return render_template('content.html', content=log)
 

@@ -12,7 +12,7 @@ import logging
 
 def get_logger():
     logger = logging.getLogger("MeterWatcher")
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
 
     formatter = logging.Formatter(
         fmt="%(asctime)s %(levelname)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
@@ -85,6 +85,13 @@ def getORP(numbers):  # From words into ORP
     return "ORP {:.0f}".format(numbers)
 
 
+def align_text(text, length):
+    space = ""
+    for i in range(length - len(text)):
+        space = space + " "
+    return space
+
+
 def value_populating(texts):
 
     metrics = ""
@@ -116,12 +123,20 @@ def value_populating(texts):
                 converted_text = getPH(numbers)
                 metrics = metrics + converted_text + "\\n"
 
-        except ValueError:
-            logger.error("can't convert:" + orignial_text)
+            log_space = align_text(orignial_text, 4)
 
-        log_info_value = (
-            log_info_value + "[" + orignial_text + " => " + converted_text + "] "
-        )
+            log_info_value = (
+                log_info_value
+                + "["
+                + orignial_text
+                + log_space
+                + ' => "'
+                + converted_text
+                + '"] '
+            )
+
+        except ValueError:
+            logger.debug("dropping:" + orignial_text)
 
     logger.info(log_info_value)
 
