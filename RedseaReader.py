@@ -85,13 +85,6 @@ def getORP(numbers):  # From words into ORP
     return "ORP {:.0f}".format(numbers)
 
 
-def align_text(text, length):
-    space = ""
-    for i in range(length - len(text)):
-        space = space + " "
-    return space
-
-
 def value_populating(texts):
 
     metrics = ""
@@ -123,16 +116,8 @@ def value_populating(texts):
                 converted_text = getPH(numbers)
                 metrics = metrics + converted_text + "\\n"
 
-            log_space = align_text(orignial_text, 4)
-
             log_info_value = (
-                log_info_value
-                + "["
-                + orignial_text
-                + log_space
-                + ' => "'
-                + converted_text
-                + '"] '
+                log_info_value + "[" + converted_text + ',' + orignial_text + ']'
             )
 
         except ValueError:
