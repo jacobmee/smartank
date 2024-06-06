@@ -74,9 +74,25 @@ def images():
     content = "".join(images)
     return render_template("content.html", content=content)
 
-
 @app.route("/log")
 def log():
+    # Read token from file
+    log_file = os.path.join(os.path.dirname(__file__), "smartank.log")
+
+    with open(log_file, "rb") as file:
+        log = tail(file).decode("utf-8")
+
+    log = log.replace("\n", "<br>") 
+
+    if not log:
+        return "Empty log", 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+
+    return render_template("content.html", content=log)
+
+
+@app.route("/info")
+def info():
     # Read token from file
     log_file = os.path.join(os.path.dirname(__file__), "smartank.log")
 
@@ -89,7 +105,11 @@ def log():
     output_list = []
     for line in log.split("\n"):
         # 2024-05-26 21:47:15 INFO: [ORP 242,242][PH 8.1,8.1][T 24,24]
-        output = {"time": line[: line.find("INFO")].strip()}
+        info_line = line.find("INFO")
+        if info_line == -1:
+            continue
+
+        output = {"time": line[: info_line].strip()}
         for value in line[line.find("[") :].split("]"):
             value_list = value.split(",")
             first = value_list[0].strip()

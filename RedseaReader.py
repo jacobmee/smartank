@@ -12,7 +12,7 @@ import logging
 
 def get_logger():
     logger = logging.getLogger("MeterWatcher")
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
 
     formatter = logging.Formatter(
         fmt="%(asctime)s %(levelname)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
@@ -191,6 +191,8 @@ def main() -> None:
         logger.error("can't convert:")
     except KeyError:
         logger.error("can't parse, token expired? ")
+    except Exception as result:
+        logger.error("unknow error, network issue? Error: %s" %result)
 
 
 if __name__ == "__main__":
