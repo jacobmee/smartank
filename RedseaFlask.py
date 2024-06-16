@@ -97,7 +97,7 @@ def info():
     log_file = os.path.join(os.path.dirname(__file__), "smartank.log")
 
     with open(log_file, "rb") as file:
-        log = tail(file).decode("utf-8")
+        log = tail(file, 100).decode("utf-8")
 
     if not log:
         return "Empty log", 200, {"Content-Type": "text/plain; charset=utf-8"}
@@ -123,6 +123,8 @@ def info():
             output[key + " converted"] = converted
             output[key + " orginal"] = orginal
 
+        if len(output_list) > 40:
+            break
         output_list.append(output)
 
     return json.dumps(output_list), 200, {"Content-Type": "text/plain; charset=utf-8"}
