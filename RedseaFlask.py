@@ -31,6 +31,10 @@ def tail(f, lines=40):
 
 app = Flask(__name__, static_url_path="/static")
 
+# Define routes
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 @app.route("/metrics")
 def metrics():
@@ -118,7 +122,10 @@ def info():
             orginal = value_list[1].strip()
             key = first.split(" ")[0]
             key = key[1:]
-            converted = first.split(" ")[1]
+            try:
+                converted = first.split(" ")[1]
+            except:
+                continue
 
             output[key + " converted"] = converted
             output[key + " orginal"] = orginal

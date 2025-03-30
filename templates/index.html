@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Tank links</title>
+    <!-- Import Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+    
+        .container {
+            text-align: center;
+            background: #ffffff;
+            padding: 30px 50px;
+            border-radius: 15px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column; /* Changed from row to column */
+            gap: 20px; /* Adjusted gap for better spacing */
+        }
+    
+        .column {
+            flex: 1;
+            min-width: 200px; /* Set a minimum width for wider columns */
+        }
+    
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 25px;
+            color: #4CAF50;
+            font-weight: 700;
+        }
+    
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: #d8851d; 
+            font-weight: 600;
+        }
+    
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+    
+        li {
+            margin: 10px 0;
+        }
+    
+        a {
+            text-decoration: none;
+            color: #007BFF;
+            font-size: 1.1rem;
+            font-weight: 400;
+            transition: color 0.3s ease, transform 0.2s ease;
+        }
+    
+        a:hover {
+            color: #0056b3;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Endpoints</h1> <!-- Added title -->
+        <ul>
+            <li><a href="/metrics" target="_blank">Metrics</a></li>
+            <li><a href="/log" target="_blank">Log</a></li>
+            <li><a href="/info" target="_blank">Info</a></li>
+            <li><a href="/images" target="_blank">Images</a></li>
+        </ul>
+    </div>
+</body>
+</html>
