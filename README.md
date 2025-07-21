@@ -9,6 +9,9 @@ Smartank is an IoT device that connects to ORP, pH, and Temperature meters, prov
 - Prometheus (Metrics collection)
 - Grafana (Visualization)
 
+
+![](images/orp.webp)
+
 ## Setup: Smartank Server
 
 1. **Install Flask**  
@@ -32,6 +35,6 @@ Smartank is an IoT device that connects to ORP, pH, and Temperature meters, prov
    Set Prometheus to scrape metrics from the RedseaFlask service.
 
 ---
-![](images/orp.webp)
+![](images/gra.webp)
 
 You can also refer to the [documentation](https://www.mitang.me/meter-reader/) for the idea
