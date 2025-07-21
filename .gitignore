@@ -5,3 +5,4 @@ images/
 token.file
 *.data
 .vscode/
+key/
