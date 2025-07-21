@@ -37,4 +37,4 @@ Smartank is an IoT device that connects to ORP, pH, and Temperature meters, prov
 ---
 ![](images/gra.webp)
 
-You can also refer to the [documentation](https://www.mitang.me/meter-reader/) for the idea
+You can also refer to the [writing](https://www.mitang.me/meter-reader/) for the idea
