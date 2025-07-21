@@ -1,6 +1,7 @@
 # Smartank
 
-Smartank is an IoT device that connects to ORP, pH, and Temperature meters, providing real-time monitoring and data logging.
+Smartank is an IoT device that connects to ORP, pH, and Temperature meters, providing real-time monitoring and data logging. The system uses Google Gemini 2.5 for image recognition.
+
 ![](images/reeftank.webp)
 
 ## Technologies Used
