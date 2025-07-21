@@ -1,6 +1,7 @@
 # Smartank
 
 Smartank is an IoT device that connects to ORP, pH, and Temperature meters, providing real-time monitoring and data logging.
+![](images/reeftank.webp)
 
 ## Technologies Used
 
@@ -31,5 +32,6 @@ Smartank is an IoT device that connects to ORP, pH, and Temperature meters, prov
    Set Prometheus to scrape metrics from the RedseaFlask service.
 
 ---
+![](images/orp.webp)
 
 You can also refer to the [documentation](https://www.mitang.me/meter-reader/) for the idea
